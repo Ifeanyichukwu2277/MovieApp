@@ -1,11 +1,30 @@
 import { useParams, useNavigate } from "react-router-dom";
 import movies from "../data";
 
-const MovieDetail = () => {
+const toEmbedUrl = (url = "") => {
+  if (!url) return "";
+
+  if (url.includes("youtube.com/embed/")) return url;
+
+  const watchMatch = url.match(/[?&]v=([^&]+)/);
+  if (watchMatch?.[1]) {
+    return `https://www.youtube.com/embed/${watchMatch[1]}`;
+  }
+
+  const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
+  if (shortMatch?.[1]) {
+    return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  }
+
+  return url;
+};
+
+const MovieDetail = ({ movies: movieList = movies }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const movie = movies.find((m) => m.id === Number(id));
+  const movie = movieList.find((m) => m.id === Number(id));
+  const trailerSrc = toEmbedUrl(movie?.trailerURL || "");
 
   if (!movie) {
     return (
@@ -54,12 +73,20 @@ const MovieDetail = () => {
         <div className="mt-8">
           <h2 className="mb-4 text-xl font-bold text-cyan-300">Official Trailer</h2>
           <div className="overflow-hidden rounded-2xl border border-white/15 shadow-xl">
-            <iframe
-              src={movie.trailerURL}
-              title={`${movie.title} Trailer`}
-              className="h-64 w-full md:h-96"
-              allowFullScreen
-            />
+            {trailerSrc ? (
+              <iframe
+                src={trailerSrc}
+                title={`${movie.title} Trailer`}
+                className="h-64 w-full md:h-96"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            ) : (
+              <div className="flex h-64 w-full items-center justify-center bg-slate-900/60 text-slate-300 md:h-96">
+                Trailer link is not available for this movie yet.
+              </div>
+            )}
           </div>
         </div>
 

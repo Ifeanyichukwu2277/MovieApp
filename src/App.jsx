@@ -5,6 +5,24 @@ import movies from "./data";
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
+const toEmbedUrl = (url = "") => {
+  if (!url) return "";
+
+  if (url.includes("youtube.com/embed/")) return url;
+
+  const watchMatch = url.match(/[?&]v=([^&]+)/);
+  if (watchMatch?.[1]) {
+    return `https://www.youtube.com/embed/${watchMatch[1]}`;
+  }
+
+  const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
+  if (shortMatch?.[1]) {
+    return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  }
+
+  return url;
+};
+
 const App = () => {
   const [movieItems, setMovieItems] = useState(movies);
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,6 +33,7 @@ const App = () => {
     description: "",
     posterURL: "",
     rating: "",
+    trailerURL: "",
   });
 
   const openModal = () => setIsModalOpen(true);
@@ -35,13 +54,13 @@ const App = () => {
         formData.posterURL.trim() ||
         "https://sm.ign.com/ign_pk/cover/a/avatar-gen/avatar-generations_rpge.jpg",
       rating: Math.max(0, Math.min(10, Number(formData.rating))),
-      trailerURL: "",   // new movies won't have a trailer yet
+      trailerURL: toEmbedUrl(formData.trailerURL.trim()),
     };
 
     if (!newMovie.title || !newMovie.description || Number.isNaN(newMovie.rating)) return;
 
     setMovieItems((prev) => [newMovie, ...prev]);
-    setFormData({ title: "", description: "", posterURL: "", rating: "" });
+    setFormData({ title: "", description: "", posterURL: "", rating: "", trailerURL: "" });
     closeModal();
   };
 
@@ -104,6 +123,7 @@ const App = () => {
               <input name="title" value={formData.title} onChange={handleFormChange} placeholder="Movie title" className="w-full rounded-xl border border-white/15 bg-slate-800/70 px-4 py-3 outline-none ring-cyan-400 transition focus:ring-2" required />
               <textarea name="description" value={formData.description} onChange={handleFormChange} placeholder="Movie description" rows={4} className="w-full rounded-xl border border-white/15 bg-slate-800/70 px-4 py-3 outline-none ring-cyan-400 transition focus:ring-2" required />
               <input name="posterURL" value={formData.posterURL} onChange={handleFormChange} placeholder="Poster URL (optional)" className="w-full rounded-xl border border-white/15 bg-slate-800/70 px-4 py-3 outline-none ring-cyan-400 transition focus:ring-2" />
+              <input name="trailerURL" value={formData.trailerURL} onChange={handleFormChange} placeholder="Trailer URL (YouTube watch/embed link)" className="w-full rounded-xl border border-white/15 bg-slate-800/70 px-4 py-3 outline-none ring-cyan-400 transition focus:ring-2" />
               <input type="number" name="rating" value={formData.rating} onChange={handleFormChange} min="0" max="10" step="0.1" placeholder="Rating (0 to 10)" className="w-full rounded-xl border border-white/15 bg-slate-800/70 px-4 py-3 outline-none ring-cyan-400 transition focus:ring-2" required />
               <button type="submit" className="w-full rounded-xl bg-linear-to-r from-cyan-500 to-fuchsia-500 py-3 font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:scale-[1.01]">
                 Save Movie
@@ -118,7 +138,7 @@ const App = () => {
   return (
     <Routes>
       <Route path="/" element={HomePage} />
-      <Route path="/movie/:id" element={<MovieDetail />} />
+      <Route path="/movie/:id" element={<MovieDetail movies={movieItems} />} />
     </Routes>
   );
 };
